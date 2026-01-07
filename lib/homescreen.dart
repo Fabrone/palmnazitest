@@ -166,63 +166,37 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: isTablet ? 4 : 4, // Changed to 4 columns for mobile
-                    mainAxisSpacing: 12, // Reduced spacing
-                    crossAxisSpacing: 12, // Reduced spacing
-                    childAspectRatio: isTablet ? 1.0 : 0.85, // Adjusted aspect ratio
-                    children: [
-                      _buildServiceCard(
-                        icon: Icons.hotel,
-                        title: 'Hotels',
-                        color: const Color(0xFF6366F1),
-                        delay: 0,
-                      ),
-                      _buildServiceCard(
-                        icon: Icons.local_taxi,
-                        title: 'Cabs',
-                        color: const Color(0xFFEC4899),
-                        delay: 100,
-                      ),
-                      _buildServiceCard(
-                        icon: Icons.flight,
-                        title: 'Flights',
-                        color: const Color(0xFF8B5CF6),
-                        delay: 200,
-                      ),
-                      _buildServiceCard(
-                        icon: Icons.restaurant,
-                        title: 'Dining',
-                        color: const Color(0xFFF59E0B),
-                        delay: 300,
-                      ),
-                      _buildServiceCard(
-                        icon: Icons.tour,
-                        title: 'Tours',
-                        color: const Color(0xFF10B981),
-                        delay: 400,
-                      ),
-                      _buildServiceCard(
-                        icon: Icons.event,
-                        title: 'Events',
-                        color: const Color(0xFFEF4444),
-                        delay: 500,
-                      ),
-                      _buildServiceCard(
-                        icon: Icons.shopping_bag,
-                        title: 'Shop',
-                        color: const Color(0xFF06B6D4),
-                        delay: 600,
-                      ),
-                      _buildServiceCard(
-                        icon: Icons.camera_alt,
-                        title: 'Activities',
-                        color: const Color(0xFFF97316),
-                        delay: 700,
-                      ),
-                    ],
+                  SizedBox(
+                    height: 110, // Fixed height for horizontal scroll
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 8,
+                      itemBuilder: (context, index) {
+                        final services = [
+                          {'icon': Icons.hotel, 'title': 'Hotels', 'color': const Color(0xFF6366F1), 'delay': 0},
+                          {'icon': Icons.local_taxi, 'title': 'Cabs', 'color': const Color(0xFFEC4899), 'delay': 100},
+                          {'icon': Icons.flight, 'title': 'Flights', 'color': const Color(0xFF8B5CF6), 'delay': 200},
+                          {'icon': Icons.restaurant, 'title': 'Dining', 'color': const Color(0xFFF59E0B), 'delay': 300},
+                          {'icon': Icons.tour, 'title': 'Tours', 'color': const Color(0xFF10B981), 'delay': 400},
+                          {'icon': Icons.event, 'title': 'Events', 'color': const Color(0xFFEF4444), 'delay': 500},
+                          {'icon': Icons.shopping_bag, 'title': 'Shop', 'color': const Color(0xFF06B6D4), 'delay': 600},
+                          {'icon': Icons.camera_alt, 'title': 'Activities', 'color': const Color(0xFFF97316), 'delay': 700},
+                        ];
+                        
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            right: 12,
+                            left: index == 0 ? 0 : 0,
+                          ),
+                          child: _buildServiceCard(
+                            icon: services[index]['icon'] as IconData,
+                            title: services[index]['title'] as String,
+                            color: services[index]['color'] as Color,
+                            delay: services[index]['delay'] as int,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(height: 28),
                   Row(
@@ -246,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     height: 220,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: 5,
+                      itemCount: 8, // Updated to show all 8 destinations
                       itemBuilder: (context, index) {
                         return _buildDestinationCard(index);
                       },
@@ -306,63 +280,75 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     required Color color,
     required int delay,
   }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 500 + delay),
-      curve: Curves.easeOut,
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: value,
-          child: Opacity(
-            opacity: value,
-            child: GestureDetector(
-              onTap: () {
-                // Handle service selection
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16), // Reduced from 20
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha:0.25),
-                      blurRadius: 10, // Reduced shadow
-                      spreadRadius: 1, // Reduced spread
-                      offset: const Offset(0, 4),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsive card width based on screen size
+        final screenWidth = MediaQuery.of(context).size.width;
+        final cardWidth = screenWidth < 600 ? 120.0 : screenWidth < 1024 ? 140.0 : 160.0;
+        
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: Duration(milliseconds: 500 + delay),
+          curve: Curves.easeOut,
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: Opacity(
+                opacity: value,
+                child: GestureDetector(
+                  onTap: () {
+                    // Handle service selection
+                  },
+                  child: Container(
+                    width: cardWidth,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha:0.25),
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10), // Reduced from 16
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha:0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 24, // Reduced from 32
-                        color: color,
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha:0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            icon,
+                            size: 24,
+                            color: color,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8), // Reduced from 12
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 13, // Reduced from 16
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -370,11 +356,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildDestinationCard(int index) {
     final destinations = [
-      {'name': 'Paris', 'country': 'France', 'rating': '4.8'},
-      {'name': 'Tokyo', 'country': 'Japan', 'rating': '4.9'},
-      {'name': 'New York', 'country': 'USA', 'rating': '4.7'},
-      {'name': 'Dubai', 'country': 'UAE', 'rating': '4.8'},
-      {'name': 'London', 'country': 'UK', 'rating': '4.6'},
+      {'name': 'Mombasa', 'country': 'Coastal Kenya', 'rating': '4.9'},
+      {'name': 'Diani Beach', 'country': 'Coastal Kenya', 'rating': '4.8'},
+      {'name': 'Malindi', 'country': 'Coastal Kenya', 'rating': '4.7'},
+      {'name': 'Lamu Island', 'country': 'Coastal Kenya', 'rating': '4.8'},
+      {'name': 'Watamu', 'country': 'Coastal Kenya', 'rating': '4.7'},
+      {'name': 'Nairobi', 'country': 'Central Kenya', 'rating': '4.6'},
+      {'name': 'Maasai Mara', 'country': 'Rift Valley', 'rating': '4.9'},
+      {'name': 'Amboseli', 'country': 'Southern Kenya', 'rating': '4.8'},
     ];
 
     final colors = [
@@ -385,8 +374,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       const Color(0xFF10B981),
     ];
 
+    // Responsive card sizing
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = screenWidth < 600 ? 160.0 : screenWidth < 1024 ? 180.0 : 200.0;
+    final cardHeight = screenWidth < 600 ? 200.0 : 220.0;
+
     return Container(
-      width: 180,
+      width: cardWidth,
+      height: cardHeight,
       margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -453,11 +448,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   children: [
                     const Icon(Icons.location_on, color: Colors.white, size: 16),
                     const SizedBox(width: 4),
-                    Text(
-                      destinations[index]['country']!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
+                    Expanded(
+                      child: Text(
+                        destinations[index]['country']!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
