@@ -169,10 +169,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: isTablet ? 4 : 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1.1,
+                    crossAxisCount: isTablet ? 4 : 4, // Changed to 4 columns for mobile
+                    mainAxisSpacing: 12, // Reduced spacing
+                    crossAxisSpacing: 12, // Reduced spacing
+                    childAspectRatio: isTablet ? 1.0 : 0.85, // Adjusted aspect ratio
                     children: [
                       _buildServiceCard(
                         icon: Icons.hotel,
@@ -194,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                       _buildServiceCard(
                         icon: Icons.restaurant,
-                        title: 'Restaurants',
+                        title: 'Dining',
                         color: const Color(0xFFF59E0B),
                         delay: 300,
                       ),
@@ -212,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                       _buildServiceCard(
                         icon: Icons.shopping_bag,
-                        title: 'Shopping',
+                        title: 'Shop',
                         color: const Color(0xFF06B6D4),
                         delay: 600,
                       ),
@@ -224,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -252,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       },
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   const Text(
                     'Special Offers',
                     style: TextStyle(
@@ -322,13 +322,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16), // Reduced from 20
                   boxShadow: [
                     BoxShadow(
-                      color: color.withValues(alpha:0.3),
-                      blurRadius: 15,
-                      spreadRadius: 2,
-                      offset: const Offset(0, 5),
+                      color: color.withValues(alpha:0.25),
+                      blurRadius: 10, // Reduced shadow
+                      spreadRadius: 1, // Reduced spread
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -336,24 +336,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(10), // Reduced from 16
                       decoration: BoxDecoration(
                         color: color.withValues(alpha:0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         icon,
-                        size: 32,
+                        size: 24, // Reduced from 32
                         color: color,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8), // Reduced from 12
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 13, // Reduced from 16
                         fontWeight: FontWeight.w600,
                       ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
