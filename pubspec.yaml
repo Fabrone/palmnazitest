@@ -24,3 +24,4 @@ flutter:
   # Add assets - pointing to project root assets folder
   assets:
     - assets/palm-trees.png
+    - assets/

@@ -815,22 +815,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildDestinationCard(int index) {
     final destinations = [
-      {'name': 'Mombasa', 'country': 'Coastal Kenya', 'rating': '4.9'},
-      {'name': 'Diani Beach', 'country': 'Coastal Kenya', 'rating': '4.8'},
-      {'name': 'Malindi', 'country': 'Coastal Kenya', 'rating': '4.7'},
-      {'name': 'Lamu Island', 'country': 'Coastal Kenya', 'rating': '4.8'},
-      {'name': 'Watamu', 'country': 'Coastal Kenya', 'rating': '4.7'},
-      {'name': 'Nairobi', 'country': 'Central Kenya', 'rating': '4.6'},
-      {'name': 'Maasai Mara', 'country': 'Rift Valley', 'rating': '4.9'},
-      {'name': 'Amboseli', 'country': 'Southern Kenya', 'rating': '4.8'},
-    ];
-
-    final colors = [
-      const Color(0xFF6366F1),
-      const Color(0xFFEC4899),
-      const Color(0xFF8B5CF6),
-      const Color(0xFFF59E0B),
-      const Color(0xFF10B981),
+      {'name': 'Mombasa', 'country': 'Coastal Kenya', 'rating': '4.9', 'image': 'assets/mombasa.jpg'},
+      {'name': 'Diani Beach', 'country': 'Coastal Kenya', 'rating': '4.8', 'image': 'assets/dianibeach.jpg'},
+      {'name': 'Malindi', 'country': 'Coastal Kenya', 'rating': '4.7', 'image': 'assets/malindi.jpg'},
+      {'name': 'Lamu Island', 'country': 'Coastal Kenya', 'rating': '4.8', 'image': 'assets/lamuisland.jpg'},
+      {'name': 'Watamu', 'country': 'Coastal Kenya', 'rating': '4.7', 'image': 'assets/watamu.jpg'},
+      {'name': 'Nairobi', 'country': 'Central Kenya', 'rating': '4.6', 'image': 'assets/nairobi.jpg'},
+      {'name': 'Maasai Mara', 'country': 'Rift Valley', 'rating': '4.9', 'image': 'assets/maasaimara.jpg'},
+      {'name': 'Amboseli', 'country': 'Southern Kenya', 'rating': '4.8', 'image': 'assets/amboseli.jpg'},
     ];
 
     final screenWidth = MediaQuery.of(context).size.width;
@@ -843,86 +835,132 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors[index % colors.length],
-            colors[index % colors.length].withValues(alpha: 0.7),
-          ],
-        ),
         boxShadow: [
           BoxShadow(
-            color: colors[index % colors.length].withValues(alpha: 0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 10,
             spreadRadius: 2,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 12,
-            right: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.star, color: Colors.amber, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    destinations[index]['rating']!,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Background Image
+            Positioned.fill(
+              child: Image.asset(
+                destinations[index]['image']!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback gradient if image fails to load
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          const Color(0xFF6366F1),
+                          const Color(0xFF6366F1).withValues(alpha: 0.7),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-          ),
-          Positioned(
-            bottom: 16,
-            left: 16,
-            right: 16,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  destinations[index]['name']!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+            // Dark overlay for better text visibility
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.7),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Row(
+              ),
+            ),
+            // Rating badge
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
                   children: [
-                    const Icon(Icons.location_on, color: Colors.white, size: 16),
+                    const Icon(Icons.star, color: Colors.amber, size: 16),
                     const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        destinations[index]['country']!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    Text(
+                      destinations[index]['rating']!,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+            // Destination info
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    destinations[index]['name']!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black,
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.white, size: 16),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          destinations[index]['country']!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
