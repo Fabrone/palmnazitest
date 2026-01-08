@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,6 +17,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
+  
+  // Backend API URL - Update this with your backend URL
+  final String apiUrl = 'http://localhost:3000/api'; // Change to your deployed URL
 
   @override
   void initState() {
@@ -52,19 +57,470 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  // Fetch hotels from backend
+  Future<List<dynamic>> fetchHotels() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$apiUrl/hotels'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['hotels'] ?? [];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Error fetching hotels: $e');
+      return [];
+    }
+  }
+
+  // Show hotels dialog
+  void _showHotelsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 600, maxWidth: 500),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                    ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.hotel, color: Colors.white, size: 28),
+                          SizedBox(width: 12),
+                          Text(
+                            'Available Hotels',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: FutureBuilder<List<dynamic>>(
+                    future: fetchHotels(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF6366F1),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.hotel_outlined,
+                                size: 80,
+                                color: Colors.grey.shade300,
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                'No Added Hotels',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Hotels will appear here once added',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          final hotel = snapshot.data![index];
+                          return _buildHotelCard(hotel);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHotelCard(dynamic hotel) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.2),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+            child: hotel['imageUrl'] != null
+                ? Image.network(
+                    hotel['imageUrl'],
+                    height: 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 150,
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.hotel, size: 60, color: Colors.grey),
+                      );
+                    },
+                  )
+                : Container(
+                    height: 150,
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.hotel, size: 60, color: Colors.grey),
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        hotel['name'] ?? 'Unknown Hotel',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.star, color: Colors.amber, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            hotel['rating']?.toString() ?? 'N/A',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        hotel['location'] ?? 'Location not specified',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  hotel['description'] ?? 'No description available',
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 13,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '\$${hotel['price'] ?? 'N/A'}/night',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6366F1),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Handle booking
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Book Now'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isTablet = size.width > 600;
 
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF6366F1),
+                Color(0xFF8B5CF6),
+                Color(0xFFEC4899),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x336366F1),
+                blurRadius: 15,
+                offset: Offset(0, 5),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  // Logo Container with Animation
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: Image.asset(
+                            'assets/palm-trees.png',
+                            width: 32,
+                            height: 32,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.emoji_nature,
+                                color: Color(0xFF6366F1),
+                                size: 32,
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  // Title with Gradient
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Colors.white, Colors.white70],
+                          ).createShader(bounds),
+                          child: const Text(
+                            'Palmnazi',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          'Your Travel Companion',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Interactive notification bell with badge
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 1000),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                // Handle notification tap
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text('No new notifications'),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    backgroundColor: const Color(0xFF6366F1),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    const Icon(
+                                      Icons.notifications_outlined,
+                                      color: Colors.white,
+                                      size: 26,
+                                    ),
+                                    // Notification badge
+                                    Positioned(
+                                      right: -4,
+                                      top: -4,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFEF4444),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 18,
+                                          minHeight: 18,
+                                        ),
+                                        child: const Text(
+                                          '3',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color(0xFF6366F1).withValues(alpha:0.1),
+              const Color(0xFF6366F1).withValues(alpha: 0.1),
               Colors.white,
             ],
           ),
@@ -106,7 +562,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Hello, Traveler! 👋',
+                            'Hello 👋, Welcome to Palmnazi..',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -129,7 +585,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withValues(alpha:0.2),
+                              color: Colors.grey.withValues(alpha: 0.2),
                               blurRadius: 8,
                               spreadRadius: 2,
                             ),
@@ -167,20 +623,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
-                    height: 110, // Fixed height for horizontal scroll
+                    height: 110,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: 8,
                       itemBuilder: (context, index) {
                         final services = [
-                          {'icon': Icons.hotel, 'title': 'Hotels', 'color': const Color(0xFF6366F1), 'delay': 0},
-                          {'icon': Icons.local_taxi, 'title': 'Cabs', 'color': const Color(0xFFEC4899), 'delay': 100},
-                          {'icon': Icons.flight, 'title': 'Flights', 'color': const Color(0xFF8B5CF6), 'delay': 200},
-                          {'icon': Icons.restaurant, 'title': 'Dining', 'color': const Color(0xFFF59E0B), 'delay': 300},
-                          {'icon': Icons.tour, 'title': 'Tours', 'color': const Color(0xFF10B981), 'delay': 400},
-                          {'icon': Icons.event, 'title': 'Events', 'color': const Color(0xFFEF4444), 'delay': 500},
-                          {'icon': Icons.shopping_bag, 'title': 'Shop', 'color': const Color(0xFF06B6D4), 'delay': 600},
-                          {'icon': Icons.camera_alt, 'title': 'Activities', 'color': const Color(0xFFF97316), 'delay': 700},
+                          {'icon': Icons.hotel, 'title': 'Hotels', 'color': const Color(0xFF6366F1), 'delay': 0, 'action': 'hotels'},
+                          {'icon': Icons.local_taxi, 'title': 'Cabs', 'color': const Color(0xFFEC4899), 'delay': 100, 'action': 'cabs'},
+                          {'icon': Icons.flight, 'title': 'Flights', 'color': const Color(0xFF8B5CF6), 'delay': 200, 'action': 'flights'},
+                          {'icon': Icons.restaurant, 'title': 'Dining', 'color': const Color(0xFFF59E0B), 'delay': 300, 'action': 'dining'},
+                          {'icon': Icons.tour, 'title': 'Tours', 'color': const Color(0xFF10B981), 'delay': 400, 'action': 'tours'},
+                          {'icon': Icons.event, 'title': 'Events', 'color': const Color(0xFFEF4444), 'delay': 500, 'action': 'events'},
+                          {'icon': Icons.shopping_bag, 'title': 'Shop', 'color': const Color(0xFF06B6D4), 'delay': 600, 'action': 'shop'},
+                          {'icon': Icons.camera_alt, 'title': 'Activities', 'color': const Color(0xFFF97316), 'delay': 700, 'action': 'activities'},
                         ];
                         
                         return Padding(
@@ -193,6 +649,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             title: services[index]['title'] as String,
                             color: services[index]['color'] as Color,
                             delay: services[index]['delay'] as int,
+                            action: services[index]['action'] as String,
                           ),
                         );
                       },
@@ -220,7 +677,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     height: 220,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: 8, // Updated to show all 8 destinations
+                      itemCount: 8,
                       itemBuilder: (context, index) {
                         return _buildDestinationCard(index);
                       },
@@ -254,7 +711,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha:0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
             blurRadius: 10,
             spreadRadius: 2,
           ),
@@ -279,10 +736,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     required String title,
     required Color color,
     required int delay,
+    required String action,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Responsive card width based on screen size
         final screenWidth = MediaQuery.of(context).size.width;
         final cardWidth = screenWidth < 600 ? 120.0 : screenWidth < 1024 ? 140.0 : 160.0;
         
@@ -297,7 +754,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 opacity: value,
                 child: GestureDetector(
                   onTap: () {
-                    // Handle service selection
+                    if (action == 'hotels') {
+                      _showHotelsDialog();
+                    }
                   },
                   child: Container(
                     width: cardWidth,
@@ -306,7 +765,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: color.withValues(alpha:0.25),
+                          color: color.withValues(alpha: 0.25),
                           blurRadius: 10,
                           spreadRadius: 1,
                           offset: const Offset(0, 4),
@@ -319,7 +778,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: color.withValues(alpha:0.1),
+                            color: color.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -374,7 +833,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       const Color(0xFF10B981),
     ];
 
-    // Responsive card sizing
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = screenWidth < 600 ? 160.0 : screenWidth < 1024 ? 180.0 : 200.0;
     final cardHeight = screenWidth < 600 ? 200.0 : 220.0;
@@ -390,12 +848,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           end: Alignment.bottomRight,
           colors: [
             colors[index % colors.length],
-            colors[index % colors.length].withValues(alpha:0.7),
+            colors[index % colors.length].withValues(alpha: 0.7),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: colors[index % colors.length].withValues(alpha:0.3),
+            color: colors[index % colors.length].withValues(alpha: 0.3),
             blurRadius: 10,
             spreadRadius: 2,
             offset: const Offset(0, 4),
@@ -481,7 +939,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6366F1).withValues(alpha:0.3),
+            color: const Color(0xFF6366F1).withValues(alpha: 0.3),
             blurRadius: 15,
             spreadRadius: 2,
             offset: const Offset(0, 5),
@@ -497,7 +955,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha:0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -700,7 +1158,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha:0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 10,
             spreadRadius: 2,
           ),
@@ -721,7 +1179,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha:0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
             blurRadius: 20,
             spreadRadius: 5,
           ),
